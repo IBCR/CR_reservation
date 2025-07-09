@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to reservation system</title>
+    <script defer src="https://ib-cr-reservation.web.app/__/firebase/9.15.0/firebase-app-compat.js"></script>
+    <script defer src="https://ib-cr-reservation.web.app/__/firebase/9.15.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://ib-cr-reservation.web.app/__/firebase/init.js?useEmulator=true"></script>
+
+
+    <!-- Import the webpage's javascript file -->
+    <style media="screen">
+      .main {
+        text-align:center;
+      }
+      body {
+        background: #ECEFF1; 
+        color: rgba(0,0,0,0.87); 
+        font-family: Roboto, Helvetica, Arial, sans-serif; 
+        margin: 0; padding: 0; 
+      }
+      #message { 
+        background: white; 
+        max-width: 360px; 
+        margin: 10px auto 16px; 
+        padding: 32px 24px; 
+        border-radius: 3px; 
+      }
+      #message h2 { 
+        color: #1100ff; 
+        font-weight: bold; 
+        font-size: 16px; 
+        margin: 0 0 8px; 
+      }
+      #message h1 { 
+        font-size: 22px; 
+        font-weight: 300; 
+        color: rgba(0,0,0,0.6); 
+        margin: 0 0 0px;
+      }
+      #load { 
+        color: rgba(0,0,0,0.4); 
+        text-align: center; 
+        font-size: 13px; 
+      }
+
+      @media (max-width: 600px) {
+        body, #message { 
+          margin-top: 0; 
+          background: white; 
+          box-shadow: none; 
+        }
+        body { 
+          border-top: 16px solid #1100ff; 
+        }
+      }
+      .calendar table {
+        margin: 3px auto;    /* 上下3px 左右auto */
+        border-spacing: 0;
+        border-collapse: collapse;
+        background-color: white;
+        table-layout: fixed;
+        width: 1000px;
+      }
+      
+      .calendar tr:nth-child(even){
+        background: #e5e5e547;
+        z-index: 1;
+      }
+
+      .calendar th {
+        border: 1px solid #ddd;
+        padding: 5px;
+        text-align: center;
+        vertical-align: middle;
+      }
+      .calendar th p {
+        text-align: center;
+      }
+      .calendar td {
+          border: 1px solid #ddd;
+          padding: 0px;
+          text-align: center;
+          vertical-align: top;
+          height: 24px;
+          position: relative;
+      }
+
+      .calendar p {
+        text-align:left;
+        vertical-align: top;
+        margin: 0;
+      }
+
+      .calendar th:nth-child(2) {
+          color: red;
+      }
+
+      .calendar th:first-child {
+          width: 7%;
+      }
+
+      .calendar th:last-child {
+          color: rgb(83, 125, 250);
+      }
+      .floating{
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .floating button{
+        float: left;
+        margin: 5% 0;
+      }
+      .floating h1{
+        font-size:large;
+        float: left;
+        margin: 5% 10px;
+      }
+      .floating p{
+        float: left;
+        margin: 0px ;
+      }
+      .clearfix{
+        margin: 0px;
+      }
+      .clearfix::after {
+        content: "";
+        display: block; 
+        clear: both;
+      }
+
+      .btn,
+      a.btn,
+      button.btn {
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1;
+        position: relative;
+        display: inline-block;
+        padding: 1rem 1rem;
+        cursor: pointer;
+        text-align: center;
+        vertical-align: middle;
+        text-decoration: none;
+        letter-spacing: 0.1em;
+      }
+
+      .btn--orange,
+      button.btn--orange {
+        color: #fff;
+        background-color: #1d6bbe;
+      }
+
+      .btn--orange:hover,
+      button.btn--orange:hover {
+        color: #fff;
+        background: #f56500;
+      }
+
+      button.btn--radius {
+        border-radius: 100vh;
+      }
+      
+      .reservation-frame {
+        background: rgb(152, 178, 255);
+        width: 90%;
+        position: absolute;
+        top: 0.1em;
+        left: 0.1em;
+      }
+
+      @media screen and (max-width:800px) {
+        .calendar table {
+        width: 80%;
+        }
+      }
+
+      @media screen and (max-width:480px) {
+        .calendar table {
+          width: 95%;
+        }
+
+        /*　画面サイズが480px以下の場合ここの記述が適用される　*/
+        .reservation-frame {
+        background: rgb(152, 178, 255);
+        position: absolute;
+        top: 0.1em;
+        left: 0.1em;
+      }
+        .calendar td {
+            border: 1px solid #ddd;
+            padding: 0px;
+            text-align: center;
+            vertical-align: top;
+            width: 50px;
+            height: 24px;
+            position: relative;
+        }
+      }
+
+      .abst{
+        z-index: 1;
+      }
+
+      .docDetail{
+        cursor : pointer;
+        z-index: 99;
+      }
+
+      @media (pointer: coarse), (hover: none) {
+        .docDetail[title] {
+          /*position: relative;
+          display: inline-flex;*/
+          justify-content: center;
+          z-index: 998;
+          word-wrap: break-word;
+        }
+        .docDetail[title]:focus::after {
+          content: attr(title);
+          position: absolute;
+          top: 90%;
+          color: #000;
+          background-color: #fff;
+          border: 1px solid;
+          width: fit-content;
+          padding: 3px;
+          z-index: 998;
+        }
+      }
+    
+      .loading {
+        position: fixed;
+        z-index: 1000;
+        width: 100%;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        background: #6fa1f942;
+      }
+      .loading.hide {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 500ms;
+      }
+      .loading .circle {
+        display: block;
+        position: relative;
+        top: calc( 50% - 20px );
+        width: 40px;
+        height: 40px;
+        margin: 0 auto;
+        border: 8px solid #e0e0e0;
+        border-top: 7px solid #3d05e4;
+        border-radius: 50px;
+        animation: loading 700ms linear 0ms infinite normal both;
+      }
+      @keyframes loading {
+        0% { transform: rotate( 0deg ); }
+        100% { transform: rotate( 360deg ); }
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="loading">
+      <span class="circle"></span>
+    </div>
+    <div class="main" >
+      <div id="message">
+        <h2>Welcome</h2>
+        <h1>Reservation System Hiro β</h1>
+      </div>
+      <!--<p><a href="https://forms.gle/xKweBBR1FSk3AvJh9">Click here to apply for equipment use by new users.</a></p>-->
+      <p id="load">Reservation System @ver1.2 updated by itoh&hellip;</p>
+      <select name="devices" id="selectedDevice" >
+        <option value="EB">EB</option>
+        <option value="ICP">ICP-RIE</option>
+        <option value="RTA">RTA</option>
+        <option value="SPT">Sputter</option>
+        <option value="PECVD">PECVD</option>
+        <option value="POLISHER">Polisher</option>
+        <option value="PEC">PEC</option>
+        <option value="SEM">SEM</option>
+        <option value="PALET">PALET</option>
+        <option value="Dacid">Draft acid/alkali</option>
+        <option value="Dorganic">Draft organic</option>
+      </select>
+      <div class="clearfix">
+        <div class="floating">
+          <button id="previousMonth"><</button>
+          <h1 id="yearMonth">Loading...</h1>
+          <button id="nextMonth">></button>
+        </div>
+      </div>
+      <div class="clearfix">
+        <div class="floating">
+          <p id ="dateRange">XX ~ YY</p>
+        </div>
+      </div>
+      
+      <div id="calendar" class="calendar"></div>
+      <!-- The surrounding HTML is left untouched by FirebaseUI.
+      Your app may use that space for branding, controls and other customizations.-->
+      <div id="auth"></div>
+
+      <!--TODO ここから追加 -->
+      <form class="reserveInfo">
+        <p>Message: <span id="statusMessage">please fill out this form.</span></p>
+        <p>Mode*: <select name="mode" id="selectedMode">
+          <option value="New">New</option>
+          <option value="Edit">Edit</option>
+          <option value="Del">Delete</option>
+        </select>
+        </p>
+        <p>Name*: <input type="textField" id="userName" required/></p>
+        <p>Date*: <input type="date" id="useDate" required/></p>
+        <p>Start*: <span id="rangeHourFromValue">00</span>:<span id="rangeMinFromValue">00</span></p>
+        <input type="range" id="rangeHourFrom" min="0" max="23" step="1" value="0">   <input type="range" id="rangeMinFrom" min="0" max="50" step="10" value="0">
+        <p>Finish*: <span id="rangeHourToValue">00</span>:<span id="rangeMinToValue">00</span></p>
+        <input type="range" id="rangeHourTo" min="0" max="23" step="1" value="0">   <input type="range" id="rangeMinTo" min="0" max="50" step="10" value="0">
+        <p>Usage*: <textarea id="usage" required></textarea></p>
+        <p>Remark: <textarea id="remark"></textarea></p>
+        <p>Pass*: <input type="textField" id="pass" required/></p>
+        <button type="button" class="btn btn--orange btn--radius" id="submitButton">Submit</button>
+        <br><br><br><br>
+        <!--<p>ver1.1 23/04/27 分単位でカレンダーが正しく表示されるように修正</p>
+        <p>ver1.2 23/05/03 予約後にページが変更してしまうバグを修正</p>
+        <p>ver1.2 23/05/03 同一時間の予約をRejectするように修正</p>
+        -->
+      </form>
+       <div id = "docList" class = "docList"></div>
+    </div>
+    <script>
+     
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        loadEl.textContent = `Reservation system ver @1.2 updated by Itoh. When you edit or del, click the reservation on calendar`;
+        try {
+          let app = firebase.app();
+          let features = [
+              'firestore',
+            ].filter(feature => typeof app[feature] === 'function');
+          let firestore = firebase.firestore();
+          //------ global var ------//
+          let weeks = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          let viewDates = ["","27", "28", "29", '30', '1', '2', '3']
+          let date = new Date()
+          let selectedYear = date.getFullYear() // 年を取得
+          let selectedMonth = date.getMonth() + 1 // 月を取得 getMonthは0始まりなので+1
+          let selectedDay = date.getDate()//.toString().padStart(2, '0')
+          let viewDateIndex = ""
+          let calendarHtml = '' // HTMLを組み立てる変数
+          let nextWeekButton = document.querySelector("#nextMonth");
+          let previousWeekButton = document.querySelector("#previousMonth");
+          let outputHeader = document.querySelector("#hotDogStatus");
+          let selectedDeviceBox = document.querySelector("#selectedDevice")
+          let selectedDevice = "EB";
+          let saveButton = document.querySelector("#saveButton");
+          let docList = document.querySelector("#docList");
+          let selectedMode = document.getElementById("selectedMode")
+          let statusMessage = document.getElementById("statusMessage")
+          let submitButton = document.getElementById("submitButton")
+          let selectedDocId = "";
+          let stockDocs = []
+          let stockDates = []
+          let isSuccess = true;
+          let loading = document.querySelector('.loading');
+        
+          //------ declare functions ------//
+          //表示する週の日
+          function updateViewDateList(date){ // 例: 2023/02/02
+            console.log("arg is " + date)
+            selectedYear = date.getFullYear() // 年を取得 2023
+            selectedMonth = date.getMonth() + 1 // 月を取得 1 + 1 = 2
+            selectedDay = date.getDate() //02
+            const endDate = new Date(selectedYear, selectedMonth, 0) // 月の最後の日を取得
+            const firstDay = date.getDate() - date.getDay()
+
+            if (firstDay <= 0) { // 週始めが前月末、週終わりが月始め
+              const lastMonthDayCount = firstDay * (-1)
+              const lastDate = new Date(selectedYear, selectedMonth - 1, 0) //
+              for (let i = 0; i < lastMonthDayCount + 1; i++) {
+                viewDates[i+1] = lastDate.getDate() - lastMonthDayCount + i;
+              }
+              for (let i = lastMonthDayCount + 1; i < 7; i++) {
+                viewDates[i+1] = i - lastMonthDayCount
+              }
+              const m = selectedMonth - 1;
+              viewDateIndex = selectedYear.toString() + m.toString().padStart(2, "0") + viewDates[1].toString().padStart(2, "0")
+            }else if (endDate.getDate() < firstDay + 6){// 週始めがその月末、週終わりが次の月始め
+              for (let i = 0; i < endDate.getDate() - firstDay + 1; i++) {
+                viewDates[i+1] = firstDay + i;
+              }
+              for (let i = endDate.getDate() - firstDay + 1; i < 7; i++) {
+                viewDates[i+1] = i - (endDate.getDate() - firstDay ); 
+              }
+              viewDateIndex = selectedYear.toString() + selectedMonth.toString().padStart(2, "0") + viewDates[1].toString().padStart(2, "0")
+            }else { //普通の日
+              for (let i = 0; i < 7; i++) {
+                viewDates[i+1] = firstDay + i;
+              }
+              viewDateIndex = selectedYear.toString() + selectedMonth.toString().padStart(2, "0") + viewDates[1].toString().padStart(2, "0")
+            }
+            console.log(viewDateIndex)
+          };
+
+          function updateCalendarHTML(){
+            console.log("function updateCalendarHTML")
+            document.getElementById("yearMonth").textContent = selectedYear + "/" + selectedMonth.toString().padStart(2, "0");
+            document.getElementById("dateRange").textContent = viewDates[1].toString() + "~" + viewDates[7].toString();
+            for (let i = 1; i < 8; i++) {
+              document.getElementById("th-"+ weeks[i]).textContent = viewDates[i];
+            }
+          }
+
+          function viewRangeTime(rangeId){
+            var elem = document.getElementById(rangeId);
+            var target = document.getElementById(rangeId+'Value');
+            function rangeValue(elem, target) {
+              return function(evt){
+                target.innerHTML = elem.value.padStart(2, "0");
+              }
+            }
+            elem.addEventListener('input', rangeValue(elem, target));
+          }
+
+          function checkInputForm(){
+             // check format
+             if (document.querySelector("#userName").value.length == 0 || document.querySelector("#useDate").value == null 
+                    || document.querySelector("#useDate").value.length != 10 || document.querySelector("#usage").value.length == 0
+                    || document.querySelector("#pass").value.length == 0 || document.querySelector("#selectedDevice").value.length == 0){
+                alert("Confirm the input form. * mark is required.")
+                console.log("input form is FALSE")
+                return false;
+            }
+            
+            // check time 
+            const useDate = document.querySelector("#useDate").value.split("-").join("")
+            const timeFrom = document.querySelector("#rangeHourFrom").value.toString().padStart(2, "0") 
+                              + document.querySelector("#rangeMinFrom").value.toString().padStart(2, "0") 
+            const timeTo = document.querySelector("#rangeHourTo").value.toString().padStart(2, "0") 
+                              + document.querySelector("#rangeMinTo").value.toString().padStart(2, "0") 
+            if (timeTo-timeFrom <= 0){
+              alert("Invalid start and finish time");
+              return false;
+            }
+
+            // check format in the Edit and Del mode  
+            const stockIndex = stockDates.indexOf(selectedDevice + "_" + viewDateIndex)
+            if ((selectedMode.value == "Edit" || selectedMode.value == "Del")){
+                if (selectedDocId.length == 0){
+                    alert("Select the reservation you want to update from the calendar.");
+                    return false;
+                }else{
+                    if (stockIndex == -1) {
+                        alert("Fatal error. Contact to the admin.")
+                        console.log("The data is not dowloaded. Edit/Del data is none")
+                        return false;
+                    }
+                    const selectedDoc = stockDocs[stockIndex].find(doc =>doc.id == selectedDocId);
+                    if (document.querySelector("#pass").value != selectedDoc.pass){
+                        alert("Oh, Hey you! Invalid password!!!")
+                        return false;
+                    }
+                }
+            }
+            
+            // check duplication
+            const dupDocs = stockDocs[stockIndex].filter(doc => ((useDate+timeFrom < doc.dateTo && doc.dateTo < useDate+timeTo) || 
+                                                                     (useDate+timeFrom < doc.dateFrom && doc.dateFrom < useDate+timeTo) ||
+                                                                     (doc.dateFrom <= useDate+timeFrom  && useDate+timeTo <= doc.dateTo)));
+            if ((selectedMode.value == "New" && dupDocs.length > 0)){ 
+              alert("Duplicate with the other reservation")
+              return false;
+            }
+
+            if ((selectedMode.value == "Edit" && (dupDocs.length > 1  || (dupDocs.length == 1 && dupDocs[0].id != selectedDocId)))){ 
+              alert("Duplicate with the other reservation")
+              return false;
+            }
+          }
+
+          async function addToFirestore(){
+            return new Promise(function(resolve, reject){
+              const dateArray = document.querySelector("#useDate").value.split("-")
+              updateViewDateList(new Date(parseInt(dateArray[0]), parseInt(dateArray[1]-1), parseInt(dateArray[2])))
+              const userName = document.querySelector("#userName").value
+              const useDate = document.querySelector("#useDate").value.split("-").join("")
+              const timeFrom = document.querySelector("#rangeHourFrom").value.toString().padStart(2, "0") 
+                              + document.querySelector("#rangeMinFrom").value.toString().padStart(2, "0") 
+              const timeTo = document.querySelector("#rangeHourTo").value.toString().padStart(2, "0") 
+                              + document.querySelector("#rangeMinTo").value.toString().padStart(2, "0") 
+              const pass = document.querySelector("#pass").value
+              const usage = document.querySelector("#usage").value
+              const remark = document.querySelector("#remark").value
+
+              if (selectedMode.value == "New"){
+                const docRef = firestore.collection(selectedDeviceBox.value + "/" + viewDateIndex + "/data");
+                docRef.add({
+                  userName: userName, 
+                  dateFrom: parseInt(useDate + timeFrom),
+                  dateTo: parseInt(useDate + timeTo),
+                  pass: pass,
+                  remark: remark,
+                  usage: usage,
+                  createdAt: new Date(),
+                  status: true
+                }).then(() => {
+                  isSuccess = true;
+                  resolve()
+                })
+                .catch((error) => {
+                  console.log(error);
+                  reject()
+                });
+              }else{
+                if(selectedDocId.length == 0){
+                  alert("ERROR; docId is null")
+                  reject()
+                  return;
+                }
+                var status = true;
+                if (selectedMode.value == "Del"){
+                  status = false;
+                }
+                const docRef = firestore.doc(selectedDeviceBox.value + "/" + viewDateIndex + "/data/" + selectedDocId);
+                docRef.update({
+                  userName: userName,
+                  dateFrom: parseInt(useDate + timeFrom),
+                  dateTo: parseInt(useDate + timeTo),
+                  pass: pass,
+                  remark: remark,
+                  usage: usage,
+                  status: status
+                }).then(() => {
+                  isSuccess = true;
+                  resolve()
+                }).catch((error) => {
+                  console.log(error);
+                  reject()
+                });
+              }; 
+            });
+          }; 
+          
+          async function submitListener(){
+            loading.classList.remove("hide");
+            if (checkInputForm() == false){
+                console.log("addToFirestore: format error");
+            }else{
+                isSuccess = false;
+                await addToFirestore();
+                if (isSuccess){
+                    docAddedListener();
+                }
+            }
+            loading.classList.add("hide");
+            
+          }
+
+          const timestampToTime = (timestamp) => {
+            const date = new Date(timestamp * 1000);
+            const yyyy = `${date.getFullYear()-1969}`;
+            // .slice(-2)で文字列中の末尾の2文字を取得する
+            // `0${date.getHoge()}`.slice(-2) と書くことで０埋めをする
+            const MM = `0${date.getMonth() + 1}`.slice(-2); // getMonth()の返り値は0が基点
+            const dd = `0${date.getDate()}`.slice(-2);
+            const HH = `0${date.getHours()}`.slice(-2);
+            const mm = `0${date.getMinutes()}`.slice(-2);
+            const ss = `0${date.getSeconds()}`.slice(-2);
+
+            return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
+          }
+
+          function getDocsFromFirestore(){
+            return new Promise(function(resolve, reject){
+                const docRef = firestore.collection(selectedDeviceBox.value + "/" + viewDateIndex + "/data");
+                const docArray = []
+                const dd = docRef.where("status", "==", true).get()
+                .then((querySnapshot) => {
+                  const getDocs =  querySnapshot.docs.map(function(doc){
+                    const data = doc.data()
+                    data.id = doc.id
+                    return data
+                  }); 
+                  resolve(getDocs)
+                }).catch((error) => {
+                  console.log(error);
+                  reject("reject")
+                });
+            });
+          }
+
+          function clearStocks(){
+            stockDates = [];
+            stockDocs = [];
+          }
+
+          async function getWeekDocs(){
+            console.log("getWeekDocs")
+            const stockIndex = stockDates.indexOf(selectedDeviceBox.value + "_" + viewDateIndex)
+            if (stockIndex == -1) {
+                const docs = await getDocsFromFirestore() 
+                stockDates.push(selectedDeviceBox.value + "_" + viewDateIndex)
+                stockDocs.push(docs)
+            }else{
+              console.log("getWeekDocs: docs are already gotten")
+            }
+          }
+
+          function setCSS(isClear, id, useTime, abst, detail, docId, topMargin){
+            let elemDiv = document.querySelector(id);
+            console.log(id+":"+elemDiv)
+            if (isClear){
+              elemDiv.style.height = "24px";
+              elemDiv.classList.remove("reservation-frame");
+              elemDiv.innerHTML = '<p></p>';
+              elemDiv.style.margin = "0"
+            }else{
+              elemDiv.classList.add("reservation-frame");
+              elemDiv.style.margin = topMargin * 25 + "px 0 0 0"
+              elemDiv.style.height = useTime * 25 - 4 + "px";
+              elemDiv.innerHTML = '<p id="' + docId +'" class = "docDetail" title="' + detail + '" tabindex="0"><span class="abst">' + abst + '</span></p>';
+            }
+          }
+
+          function clearDocsOnCalendar(){
+            const stockIndex = stockDates.indexOf(selectedDevice + "_" + viewDateIndex)
+            if (stockIndex == -1) {
+              console.log("stock doesn't have the date to clear")
+              return
+            }
+            const docs = stockDocs[stockIndex]
+            docs.forEach(function(doc, index) {
+              const dateFrom = String(doc["dateFrom"])
+              //date format: 2022-1223-1300 (0123-4567-891011)
+              const date = parseInt(dateFrom.substring(6, 8));
+              const timeFrom = parseInt(dateFrom.substring(8, 10));
+              const day = viewDates.indexOf(date);
+              const id = '#td-' + timeFrom + "-" + day;
+              setCSS(true, id, 0, "","", "", 0)
+            });
+          }
+
+          function fillForm(docId){
+            const stockIndex = stockDates.indexOf(selectedDeviceBox.value + "_" + viewDateIndex)
+            if (stockIndex == -1) {
+              console.log("stock doesn't have the date to update")
+              return
+            }
+            const docs = stockDocs[stockIndex]
+            const selectedDoc = docs.find(doc =>doc.id == docId);
+            const dateFrom = String(selectedDoc.dateFrom);
+            const dateTo = String(selectedDoc.dateTo);
+            const date = dateFrom.substring(0, 4) + "-" + dateFrom.substring(4, 6) + "-" + dateFrom.substring(6, 8);
+            document.getElementById("userName").value = selectedDoc.userName;
+            document.getElementById("useDate").value = date;
+            document.getElementById("rangeHourFromValue").textContent = dateFrom.substring(8, 10);
+            document.getElementById("rangeMinFromValue").textContent  = dateFrom.substring(10, 12);
+            document.getElementById("rangeHourToValue").textContent  = dateTo.substring(8, 10);
+            document.getElementById("rangeMinToValue").textContent  =  dateTo.substring(10, 12);
+            document.getElementById("rangeHourFrom").value = dateFrom.substring(8, 10);
+            document.getElementById("rangeMinFrom").value = dateFrom.substring(10, 12);
+            document.getElementById("rangeHourTo").value = dateTo.substring(8, 10);
+            document.getElementById("rangeMinTo").value =  dateTo.substring(10, 12);
+            document.getElementById("usage").value = selectedDoc.usage;
+            document.getElementById("remark").value = selectedDoc.remark;
+          }
+
+          function changeMessage(text){
+            statusMessage.textContent = text;
+          }
+          
+          function docListClickListener(e){
+             //change mode Edit/Del
+            if (selectedMode.selectedIndex != 2){
+              selectedMode.selectedIndex = 1
+            }
+            changeMessage("Update the input form, and click 'Submit' button"); //message chage
+            selectedDocId = this.docId;
+            fillForm(this.docId); //fill out form
+          }
+
+          function setDocsOnCalendar(){
+            console.log("setDocsOnCalendar")
+            const stockIndex = stockDates.indexOf(selectedDeviceBox.value + "_" + viewDateIndex)
+            if (stockIndex == -1) {
+              console.log("stock doesn't have the date to update")
+              return
+            }
+            
+            const docs = stockDocs[stockIndex]
+            docs.forEach(function(doc, index) {
+              if (doc["status"] == false){
+                return; //forEach is function, so use "return;"
+              } 
+              const dateFrom = String(doc["dateFrom"])
+              const dateTo = String(doc["dateTo"])
+              //date format: 202212231300 (0123/45/67 89:(10)(11))
+              const date = parseInt(dateFrom.substring(6, 8));
+              const timeFromHour = parseInt(dateFrom.substring(8, 10));
+              var timeFromMin = parseInt(dateFrom.substring(10, 12))/60;
+              timeFromMin = parseFloat(timeFromMin.toFixed(1))
+              const timeToHour = parseInt(dateTo.substring(8, 10));
+              var timeToMin = parseInt(dateTo.substring(10, 12))/60;
+              timeToMin = parseFloat(timeToMin.toFixed(1))
+              const useTime = (timeToHour + timeToMin)  - (timeFromHour + timeFromMin);
+
+              const day = viewDates.indexOf(date);
+              const id = '#td-' + timeFromHour + "-" + day;
+              const abst = doc["userName"] + " " +doc["usage"] + " " + doc["remark"]; 
+              const detail = doc["userName"] + " " + dateFrom.substring(8, 10) + ":" + dateFrom.substring(10, 12) 
+              + "-" + dateTo.substring(8, 10) + ":" + dateTo.substring(10, 12) + " " +doc["usage"] + " " + doc["remark"]; 
+              const createdAt = timestampToTime(doc["createdAt"])
+              setCSS(false, id, useTime, abst, detail, doc["id"], timeFromMin)
+            });
+
+            docs.forEach(function(doc, index) {
+              if(doc["status"]==true && document.getElementById(doc["id"])!=null){
+                const docEle = document.getElementById(doc["id"]);
+                docEle.addEventListener("click", {docId: doc["id"], handleEvent: docListClickListener});
+              }
+            })
+          }
+
+          async function docAddedListener(){
+            clearDocsOnCalendar() 
+            clearStocks()
+            await getWeekDocs()
+            setDocsOnCalendar()
+            
+          }
+
+          async function dateChangeListener(){
+            clearDocsOnCalendar() 
+            updateViewDateList(new Date(selectedYear, selectedMonth - 1, selectedDay + this.forwardSpan))
+            updateCalendarHTML(this.forwardSpan)
+            await getWeekDocs()
+            setDocsOnCalendar()
+          }
+
+          async function deviceChangeListener(){
+            console.log("deviceChangeListener")
+            clearDocsOnCalendar() 
+            selectedDevice = selectedDeviceBox.value
+            await getWeekDocs()
+            setDocsOnCalendar()
+          }
+
+          function modeChangeListener(event){
+            const mode = event.currentTarget.value;
+            if (mode == "New"){
+              changeMessage("Please, fill out the input form.");
+              selectedDocId = "";
+            }else{
+              changeMessage("Click on the reservation you want to update from the list below.") 
+            }
+          }
+
+          selectedMode.addEventListener("change", modeChangeListener);
+
+      
+          //------ initialize ------//
+          updateViewDateList(new Date())
+          document.getElementById("dateRange").textContent = viewDates[1].toString() + "~" + viewDates[7];
+          document.getElementById("useDate").value = selectedYear + "-"+ selectedMonth.toString().padStart(2, "0") + "-" + selectedDay.toString().padStart(2, "0");
+
+          // set calendar
+          calendarHtml += '<table>'
+          // 曜日の行を作成
+          for (let i = 0; i < weeks.length; i++) {
+              calendarHtml += '<th><p id="th-' + weeks[i]+ '">' + viewDates[i] + '</p><p>' + weeks[i] + '</p></th>'
+          };
+
+          for (let row = 0; row < 24; row++) {
+              calendarHtml += '<tr>'
+              for (let col = 0; col < weeks.length; col++) {
+                      // 1行目で1日の曜日の前
+                if (col == 0){
+                  calendarHtml += '<td>' + row + '</td>'
+                } else{
+                  calendarHtml += '<td><div id="td-' + row + "-" + col +'"></div></td>'
+                }
+              }
+              calendarHtml += '</tr>'
+          };
+          calendarHtml += '</table>'
+          document.querySelector('#calendar').innerHTML = calendarHtml;
+
+          viewRangeTime("rangeHourFrom")
+          viewRangeTime("rangeHourTo")
+          viewRangeTime("rangeMinFrom")
+          viewRangeTime("rangeMinTo")
+          
+          function test(){
+            console.log("test")
+          }
+
+          nextWeekButton.addEventListener("click", {forwardSpan: 7, handleEvent: dateChangeListener});
+          previousWeekButton.addEventListener("click",{forwardSpan: -7, handleEvent: dateChangeListener});
+          submitButton.addEventListener("click", submitListener);
+          selectedDeviceBox.addEventListener("change", deviceChangeListener);
+          loading.classList.add('hide');
+
+          //init
+          async function init(){
+            updateViewDateList(new Date(selectedYear, selectedMonth - 1, selectedDay))
+            updateCalendarHTML()
+            await getWeekDocs()
+            setDocsOnCalendar()
+          }
+          init()
+
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+
+    </script>
+  </body>
+</html>
